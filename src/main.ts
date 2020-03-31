@@ -1,6 +1,7 @@
 import { PointLight, Mesh, sRGBEncoding, PCFSoftShadowMap, Object3D, CylinderBufferGeometry, MeshStandardMaterial } from 'three'
 import { init } from './ts/helpers/three-utils'
 import RAF from './ts/helpers/raf'
+import { lerp } from './ts/helpers/utils'
 import createRoom from './ts/createRoom'
 import roomPlans from './assets/rooms'
 
@@ -72,8 +73,12 @@ window.addEventListener('keyup', e => {
 raf.subscribe(() => {
   position.x += velocity.x / 5
   position.y += velocity.y / 5
-  camera.position.set(position.x, 20, position.y + 6)
-  camera.lookAt(position.x, 0, position.y)
+  camera.position.set(
+    lerp(camera.position.x, position.x, 0.1),
+    20,
+    lerp(camera.position.z, position.y + 6, 0.1)
+  )
+  camera.lookAt(camera.position.x, 0, camera.position.z - 6)
   light.position.set(position.x, 3, position.y)
 })
 
