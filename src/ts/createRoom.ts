@@ -18,7 +18,11 @@ export default function createRoom (plan): Mesh {
 
   const { positions, normals, indices } = world.generateGeometryDataForCell(0, 0, 0)
   const geometry = new BufferGeometry()
-  const material = new MeshPhysicalMaterial({ color: 0xFFCC88 })
+  const material = new MeshPhysicalMaterial({
+    color: 0xFFFFFF,
+    roughness: 0.8,
+    metalness: 0.2
+  })
 
   const positionNumComponents = 3
   const normalNumComponents = 3

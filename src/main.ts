@@ -1,4 +1,9 @@
-import { PointLight, Mesh, sRGBEncoding, PCFSoftShadowMap, Object3D, CylinderBufferGeometry, MeshStandardMaterial } from 'three'
+import { PointLight, Mesh, sRGBEncoding, PCFSoftShadowMap, Object3D, CylinderBufferGeometry, MeshStandardMaterial, Vector2 } from 'three'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { init } from './ts/helpers/three-utils'
 import RAF from './ts/helpers/raf'
 import { lerp } from './ts/helpers/utils'
@@ -13,6 +18,16 @@ renderer.outputEncoding = sRGBEncoding
 renderer.pixelRatio = 2
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = PCFSoftShadowMap
+
+// FX
+
+const composer = new EffectComposer(renderer)
+const bloomFx = new UnrealBloomPass(new Vector2(window.innerWidth, window.innerHeight), 0.3, 0.1, 0.01)
+const fxaa = new ShaderPass(FXAAShader)
+composer.setSize(window.innerWidth, window.innerHeight)
+composer.addPass(new RenderPass(scene, camera))
+composer.addPass(bloomFx)
+composer.addPass(fxaa)
 
 const _ = null
 const levelPlan = [
@@ -41,13 +56,15 @@ levelPlan.forEach((row, x) => {
 
 scene.add(level)
 
-const light = new PointLight(0xffee88, 1, 100, 2)
+const light = new PointLight(0xFFCC88, 1, 100, 2)
 light.add(new Mesh(
   new CylinderBufferGeometry(0.3, 0.3, 3, 8),
   new MeshStandardMaterial({ emissive: 0xffffee, emissiveIntensity: 1 / 0.04, color: 0x000000 })
 ))
 light.castShadow = true
 light.power = 10
+light.shadow.mapSize.width = 2048
+light.shadow.mapSize.height = 2048
 scene.add(light)
 
 // Move
@@ -83,5 +100,5 @@ raf.subscribe(() => {
 })
 
 raf.subscribe(() => {
-  renderer.render(scene, camera)
+  composer.render()
 })
