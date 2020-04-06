@@ -1,7 +1,7 @@
 {
   "name": "rogue",
   "version": "1.0.0",
-  "description": "Rogue-like 3D test",
+  "description": "3D rogue-like game test",
   "main": "index.html",
   "scripts": {
     "start": "parcel index.html --open",
@@ -10,7 +10,7 @@
     "deploy": "gh-pages -d dist"
   },
   "repository": "git@github.com:m0wh/rogue.git",
-  "author": "Malo Widerspach <hello@mowh.fr>",
+  "author": "m0wh<hello@mowh.fr>",
   "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.20.0",
