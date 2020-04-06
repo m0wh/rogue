@@ -8,12 +8,13 @@ export class Player {
   private lerpVelocity = new Vector3(0, 0, 0)
   public obj = new Object3D()
   private walkableMap: boolean[][] | null
+  private radius: number = 0.5
 
   constructor ({ walkableMap = null }: { walkableMap: boolean[][] | null }) {
     this.walkableMap = walkableMap
 
     const light = new PointLight(0xFFCC88, 1, 100, 2)
-    const lightObj = new Mesh(new CylinderBufferGeometry(0.5, 0.5, 3, 8), new MeshStandardMaterial({ emissive: 0xffffee, emissiveIntensity: 1 / 0.04, color: 0x000000 }))
+    const lightObj = new Mesh(new CylinderBufferGeometry(this.radius / 2, this.radius, 3, 8), new MeshStandardMaterial({ emissive: 0xffffee, emissiveIntensity: 1 / 0.04, color: 0x000000 }))
     lightObj.position.y = -2
     light.add(lightObj)
     light.castShadow = true
@@ -34,13 +35,13 @@ export class Player {
 
       this.lerpVelocity.copy(newLerpVelocity)
 
-      if (canWalkOn(this.position.x + this.lerpVelocity.x / 5, this.position.z)) {
+      if (canWalkOn(this.position.x + this.lerpVelocity.x / 5 + (this.lerpVelocity.x > 0 ? this.radius : -this.radius), this.position.z)) {
         this.position.x += this.lerpVelocity.x / 5
       } else {
         this.lerpVelocity.x = 0
       }
 
-      if (canWalkOn(this.position.x, this.position.z + this.lerpVelocity.z)) {
+      if (canWalkOn(this.position.x, this.position.z + this.lerpVelocity.z / 5 + (this.lerpVelocity.z > 0 ? this.radius : -this.radius))) {
         this.position.z += this.lerpVelocity.z / 5
       } else {
         this.lerpVelocity.z = 0

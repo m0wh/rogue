@@ -29,8 +29,8 @@ export default function createMinimap (mapArray: boolean[][], players: Player[])
 
     players.forEach(player => {
       ctx.fillStyle = 'red'
-      const x = Math.round(player.position.x)
-      const y = Math.round(player.position.z)
+      const x = player.position.x
+      const y = player.position.z
       ctx.fillRect(x * 3, y * 3, 3, 3)
     })
   })
