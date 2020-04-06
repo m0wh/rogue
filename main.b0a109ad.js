@@ -35415,7 +35415,598 @@ if (typeof __THREE_DEVTOOLS__ !== 'undefined') {
   /* eslint-enable no-undef */
 
 }
-},{}],"node_modules/three/examples/jsm/postprocessing/Pass.js":[function(require,module,exports) {
+},{}],"src/ts/helpers/three-utils.ts":[function(require,module,exports) {
+"use strict";
+
+var __importStar = this && this.__importStar || function (mod) {
+  if (mod && mod.__esModule) return mod;
+  var result = {};
+  if (mod != null) for (var k in mod) {
+    if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+  }
+  result["default"] = mod;
+  return result;
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var THREE = __importStar(require("three"));
+
+function init() {
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  var renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+  window.addEventListener('resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+  return {
+    scene: scene,
+    camera: camera,
+    renderer: renderer
+  };
+}
+
+exports.init = init;
+},{"three":"node_modules/three/build/three.module.js"}],"src/ts/helpers/raf.ts":[function(require,module,exports) {
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var RAF =
+/*#__PURE__*/
+function () {
+  function RAF() {
+    _classCallCheck(this, RAF);
+
+    this.subscribers = [];
+    this.update();
+  }
+
+  _createClass(RAF, [{
+    key: "subscribe",
+    value: function subscribe(f) {
+      var sub = new RAFSubscription(f);
+      this.subscribers.push(sub);
+      return sub;
+    }
+  }, {
+    key: "unSubscibe",
+    value: function unSubscibe(sub) {
+      var index = this.subscribers.indexOf(sub);
+      this.subscribers.splice(index);
+    }
+  }, {
+    key: "update",
+    value: function update() {
+      this.subscribers.forEach(function (sub) {
+        sub.execute();
+      });
+      requestAnimationFrame(this.update.bind(this));
+    }
+  }]);
+
+  return RAF;
+}();
+
+var RAFSubscription =
+/*#__PURE__*/
+function () {
+  function RAFSubscription(f) {
+    _classCallCheck(this, RAFSubscription);
+
+    this.f = function () {};
+
+    this.isPlaying = true;
+    this.f = f;
+  }
+
+  _createClass(RAFSubscription, [{
+    key: "play",
+    value: function play() {
+      this.isPlaying = true;
+    }
+  }, {
+    key: "pause",
+    value: function pause() {
+      this.isPlaying = false;
+    }
+  }, {
+    key: "execute",
+    value: function execute() {
+      var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+      if (this.isPlaying || force) {
+        this.f();
+      }
+    }
+  }]);
+
+  return RAFSubscription;
+}();
+
+exports.default = new RAF();
+},{}],"src/ts/helpers/utils.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+function range(val, inMin, inMax, outMin, outMax) {
+  return (val - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+}
+
+exports.range = range;
+
+function lerp(start, end, amt) {
+  return (1 - amt) * start + amt * end;
+}
+
+exports.lerp = lerp;
+},{}],"src/assets/facesData.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = [{
+  dir: [-1, 0, 0],
+  corners: [[0, 1, 0], [0, 0, 0], [0, 1, 1], [0, 0, 1]]
+}, {
+  dir: [1, 0, 0],
+  corners: [[1, 1, 1], [1, 0, 1], [1, 1, 0], [1, 0, 0]]
+}, {
+  dir: [0, -1, 0],
+  corners: [[1, 0, 1], [0, 0, 1], [1, 0, 0], [0, 0, 0]]
+}, {
+  dir: [0, 1, 0],
+  corners: [[0, 1, 1], [1, 1, 1], [0, 1, 0], [1, 1, 0]]
+}, {
+  dir: [0, 0, -1],
+  corners: [[1, 0, 0], [0, 0, 0], [1, 1, 0], [0, 1, 0]]
+}, {
+  dir: [0, 0, 1],
+  corners: [[0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]]
+}];
+},{}],"src/ts/helpers/VoxelWorld.ts":[function(require,module,exports) {
+"use strict";
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var three_1 = require("three");
+
+var facesData_1 = __importDefault(require("../../assets/facesData"));
+
+var VoxelWorld =
+/*#__PURE__*/
+function () {
+  function VoxelWorld(cellSize) {
+    _classCallCheck(this, VoxelWorld);
+
+    this.faces = facesData_1.default;
+    this.cellSize = cellSize;
+    this.cellSliceSize = cellSize * cellSize;
+    this.cell = new Uint8Array(cellSize * cellSize * cellSize);
+  }
+
+  _createClass(VoxelWorld, [{
+    key: "computeVoxelOffset",
+    value: function computeVoxelOffset(x, y, z) {
+      var cellSize = this.cellSize,
+          cellSliceSize = this.cellSliceSize;
+      var voxelX = three_1.MathUtils.euclideanModulo(x, cellSize) | 0;
+      var voxelY = three_1.MathUtils.euclideanModulo(y, cellSize) | 0;
+      var voxelZ = three_1.MathUtils.euclideanModulo(z, cellSize) | 0;
+      return voxelY * cellSliceSize + voxelZ * cellSize + voxelX;
+    }
+  }, {
+    key: "getCellForVoxel",
+    value: function getCellForVoxel(x, y, z) {
+      var cellSize = this.cellSize;
+      var cellX = Math.floor(x / cellSize);
+      var cellY = Math.floor(y / cellSize);
+      var cellZ = Math.floor(z / cellSize);
+
+      if (cellX !== 0 || cellY !== 0 || cellZ !== 0) {
+        return null;
+      }
+
+      return this.cell;
+    }
+  }, {
+    key: "setVoxel",
+    value: function setVoxel(x, y, z, v) {
+      var cell = this.getCellForVoxel(x, y, z);
+
+      if (!cell) {
+        return; // TODO: add a new cell?
+      }
+
+      var voxelOffset = this.computeVoxelOffset(x, y, z);
+      cell[voxelOffset] = v;
+    }
+  }, {
+    key: "getVoxel",
+    value: function getVoxel(x, y, z) {
+      var cell = this.getCellForVoxel(x, y, z);
+
+      if (!cell) {
+        return 0;
+      }
+
+      var voxelOffset = this.computeVoxelOffset(x, y, z);
+      return cell[voxelOffset];
+    }
+  }, {
+    key: "generateGeometryDataForCell",
+    value: function generateGeometryDataForCell(cellX, cellY, cellZ) {
+      var cellSize = this.cellSize;
+      var positions = [];
+      var normals = [];
+      var indices = [];
+      var startX = cellX * cellSize;
+      var startY = cellY * cellSize;
+      var startZ = cellZ * cellSize;
+
+      for (var y = 0; y < cellSize; ++y) {
+        var voxelY = startY + y;
+
+        for (var z = 0; z < cellSize; ++z) {
+          var voxelZ = startZ + z;
+
+          for (var x = 0; x < cellSize; ++x) {
+            var voxelX = startX + x;
+            var voxel = this.getVoxel(voxelX, voxelY, voxelZ);
+
+            if (voxel) {
+              // There is a voxel here but do we need faces for it?
+              var _iteratorNormalCompletion = true;
+              var _didIteratorError = false;
+              var _iteratorError = undefined;
+
+              try {
+                for (var _iterator = this.faces[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                  var _step$value = _step.value,
+                      dir = _step$value.dir,
+                      corners = _step$value.corners;
+                  var neighbor = this.getVoxel(voxelX + dir[0], voxelY + dir[1], voxelZ + dir[2]);
+
+                  if (!neighbor) {
+                    // this voxel has no neighbor in this direction so we need a face.
+                    var ndx = positions.length / 3;
+                    var _iteratorNormalCompletion2 = true;
+                    var _didIteratorError2 = false;
+                    var _iteratorError2 = undefined;
+
+                    try {
+                      for (var _iterator2 = corners[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                        var pos = _step2.value;
+                        positions.push(pos[0] + x, pos[1] + y, pos[2] + z);
+                        normals.push.apply(normals, _toConsumableArray(dir));
+                      }
+                    } catch (err) {
+                      _didIteratorError2 = true;
+                      _iteratorError2 = err;
+                    } finally {
+                      try {
+                        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+                          _iterator2.return();
+                        }
+                      } finally {
+                        if (_didIteratorError2) {
+                          throw _iteratorError2;
+                        }
+                      }
+                    }
+
+                    indices.push(ndx, ndx + 1, ndx + 2, ndx + 2, ndx + 1, ndx + 3);
+                  }
+                }
+              } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+              } finally {
+                try {
+                  if (!_iteratorNormalCompletion && _iterator.return != null) {
+                    _iterator.return();
+                  }
+                } finally {
+                  if (_didIteratorError) {
+                    throw _iteratorError;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        positions: positions,
+        normals: normals,
+        indices: indices
+      };
+    }
+  }]);
+
+  return VoxelWorld;
+}();
+
+exports.default = VoxelWorld;
+},{"three":"node_modules/three/build/three.module.js","../../assets/facesData":"src/assets/facesData.ts"}],"src/ts/objects/createLevel.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var three_1 = require("three");
+
+var VoxelWorld_1 = __importDefault(require("../helpers/VoxelWorld"));
+
+function mergeRooms(roomMaps, levelMapping) {
+  var roomSize = roomMaps[0].length;
+  var levelSize = {
+    x: levelMapping[0].length * roomSize,
+    y: levelMapping.length * roomSize
+  };
+  var fullLevel = new Array(levelSize.y).fill(new Array(levelSize.x).fill(null));
+  return fullLevel.map(function (row, absY) {
+    return row.map(function (_cell, absX) {
+      var roomX = Math.floor(absX / roomSize);
+      var roomY = Math.floor(absY / roomSize);
+      var mapX = absX % roomSize;
+      var mapY = absY % roomSize;
+      var roomId = levelMapping[roomY][roomX];
+      var roomMap = roomMaps[roomId];
+      return roomMap ? roomMap[mapY][mapX] : null;
+    });
+  });
+}
+
+exports.mergeRooms = mergeRooms;
+
+function addExteriorWalls(map, levelMapping) {
+  var newMap = map;
+  var roomSize = map.length / levelMapping.length;
+  levelMapping.forEach(function (row, y) {
+    var nullOrNotExist = function nullOrNotExist(X, Y) {
+      if (X < 0 || Y < 0 || X >= levelMapping.length || Y >= levelMapping.length) {
+        return true;
+      } else {
+        return levelMapping[Y][X] === null;
+      }
+    };
+
+    row.forEach(function (_room, x) {
+      if (levelMapping[y][x] !== null) {
+        if (nullOrNotExist(x, y - 1)) {
+          for (var i = 0; i < roomSize; i++) {
+            newMap[y * roomSize][x * roomSize + i] = 255;
+          }
+        }
+
+        if (nullOrNotExist(x, y + 1)) {
+          for (var _i = 0; _i < roomSize; _i++) {
+            newMap[(y + 1) * roomSize - 1][x * roomSize + _i] = 255;
+          }
+        }
+
+        if (nullOrNotExist(x - 1, y)) {
+          for (var _i2 = 0; _i2 < roomSize; _i2++) {
+            newMap[y * roomSize + _i2][x * roomSize] = 255;
+          }
+        }
+
+        if (nullOrNotExist(x + 1, y)) {
+          for (var _i3 = 0; _i3 < roomSize; _i3++) {
+            newMap[y * roomSize + _i3][(x + 1) * roomSize - 1] = 255;
+          }
+        }
+      }
+    });
+  });
+  return newMap;
+}
+
+exports.addExteriorWalls = addExteriorWalls;
+
+function mapToMesh(map) {
+  var cellSize = map.length;
+  var world = new VoxelWorld_1.default(cellSize);
+  map.forEach(function (row, z) {
+    row.forEach(function (pixel, x) {
+      var bin = pixel ? pixel.toString(2) : '00000000';
+      bin.split('').forEach(function (elev, y) {
+        if (elev === '1') {
+          world.setVoxel(x, y, z, 1);
+        }
+      });
+    });
+  });
+
+  var _world$generateGeomet = world.generateGeometryDataForCell(0, 0, 0),
+      positions = _world$generateGeomet.positions,
+      normals = _world$generateGeomet.normals,
+      indices = _world$generateGeomet.indices;
+
+  var geometry = new three_1.BufferGeometry();
+  var material = new three_1.MeshPhysicalMaterial({
+    color: 0xFFFFFF,
+    roughness: 0.8,
+    metalness: 0.2
+  });
+  var positionNumComponents = 3;
+  var normalNumComponents = 3;
+  geometry.setAttribute('position', new three_1.BufferAttribute(new Float32Array(positions), positionNumComponents));
+  geometry.setAttribute('normal', new three_1.BufferAttribute(new Float32Array(normals), normalNumComponents));
+  geometry.setIndex(indices);
+  return new three_1.Mesh(geometry, material);
+}
+
+exports.mapToMesh = mapToMesh;
+
+function mapToWalkable(map) {
+  return map.map(function (row, z) {
+    return row.map(function (pixel, x) {
+      var bin = pixel ? pixel.toString(2) : '00000000';
+      return bin.substr(0, 4) === '1000';
+    });
+  });
+}
+
+exports.mapToWalkable = mapToWalkable;
+},{"three":"node_modules/three/build/three.module.js","../helpers/VoxelWorld":"src/ts/helpers/VoxelWorld.ts"}],"src/assets/rooms.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = [[[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255, 255, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 192, 224, 224, 192, 128, 128, 128, 128, 128, 255], [131, 128, 128, 128, 128, 192, 224, 0, 0, 224, 192, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 224, 0, 0, 0, 0, 224, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 224, 0, 0, 0, 0, 224, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 192, 224, 0, 0, 224, 192, 128, 128, 128, 128, 131], [255, 128, 128, 128, 128, 128, 192, 224, 224, 192, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 255, 255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [131, 128, 128, 128, 128, 128, 192, 225, 225, 192, 128, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 128, 225, 255, 255, 225, 128, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 128, 225, 255, 255, 225, 128, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 128, 192, 225, 225, 192, 128, 128, 128, 128, 128, 131], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255], [128, 128, 128, 128, 128, 192, 128, 128, 128, 128, 192, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [255, 192, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 192, 255], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [255, 192, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 192, 255], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 192, 128, 128, 128, 128, 192, 128, 128, 128, 128, 128], [255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255]]];
+},{}],"src/ts/objects/Player.ts":[function(require,module,exports) {
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var three_1 = require("three");
+
+var raf_1 = __importDefault(require("../helpers/raf"));
+
+var utils_1 = require("../helpers/utils");
+
+var Player =
+/*#__PURE__*/
+function () {
+  function Player(_ref) {
+    var _this = this;
+
+    var _ref$walkableMap = _ref.walkableMap,
+        walkableMap = _ref$walkableMap === void 0 ? null : _ref$walkableMap;
+
+    _classCallCheck(this, Player);
+
+    this.position = new three_1.Vector3(0, 0, 0);
+    this.velocity = new three_1.Vector3(0, 0, 0);
+    this.lerpVelocity = new three_1.Vector3(0, 0, 0);
+    this.obj = new three_1.Object3D();
+    this.radius = 0.5;
+    this.walkableMap = walkableMap;
+    var light = new three_1.PointLight(0xFFCC88, 1, 100, 2);
+    var lightObj = new three_1.Mesh(new three_1.CylinderBufferGeometry(this.radius / 2, this.radius, 3, 8), new three_1.MeshStandardMaterial({
+      emissive: 0xffffee,
+      emissiveIntensity: 1 / 0.04,
+      color: 0x000000
+    }));
+    lightObj.position.y = -2;
+    light.add(lightObj);
+    light.castShadow = true;
+    light.power = 10;
+    light.shadow.mapSize.width = 2048;
+    light.position.set(0.5, 5.5, 0.5);
+    light.shadow.mapSize.height = 2048;
+    this.obj.add(light);
+    raf_1.default.subscribe(function () {
+      var canWalkOn = function canWalkOn(x, z) {
+        return _this.walkableMap[Math.round(z)][Math.round(x)];
+      };
+
+      var newLerpVelocity = new three_1.Vector3(utils_1.lerp(_this.lerpVelocity.x, _this.velocity.x, 0.2), utils_1.lerp(_this.lerpVelocity.y, _this.velocity.y, 0.1), utils_1.lerp(_this.lerpVelocity.z, _this.velocity.z, 0.2));
+
+      _this.lerpVelocity.copy(newLerpVelocity);
+
+      if (canWalkOn(_this.position.x + _this.lerpVelocity.x / 5 + (_this.lerpVelocity.x > 0 ? _this.radius : -_this.radius), _this.position.z)) {
+        _this.position.x += _this.lerpVelocity.x / 5;
+      } else {
+        _this.lerpVelocity.x = 0;
+      }
+
+      if (canWalkOn(_this.position.x, _this.position.z + _this.lerpVelocity.z / 5 + (_this.lerpVelocity.z > 0 ? _this.radius : -_this.radius))) {
+        _this.position.z += _this.lerpVelocity.z / 5;
+      } else {
+        _this.lerpVelocity.z = 0;
+      }
+
+      _this.position.y += _this.lerpVelocity.y / 5;
+
+      _this.obj.position.set(_this.position.x, 0, _this.position.z);
+    });
+  }
+
+  _createClass(Player, [{
+    key: "velocityX",
+    set: function set(value) {
+      this.velocity.x = Math.max(-1, Math.min(1, value));
+    }
+  }, {
+    key: "velocityZ",
+    set: function set(value) {
+      this.velocity.z = Math.max(-1, Math.min(1, value));
+    }
+  }]);
+
+  return Player;
+}();
+
+exports.Player = Player;
+},{"three":"node_modules/three/build/three.module.js","../helpers/raf":"src/ts/helpers/raf.ts","../helpers/utils":"src/ts/helpers/utils.ts"}],"node_modules/three/examples/jsm/postprocessing/Pass.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -36338,434 +36929,12 @@ RenderPass.prototype = Object.assign(Object.create(_Pass.Pass.prototype), {
     renderer.autoClear = oldAutoClear;
   }
 });
-},{"../postprocessing/Pass.js":"node_modules/three/examples/jsm/postprocessing/Pass.js"}],"src/ts/helpers/three-utils.ts":[function(require,module,exports) {
-"use strict";
-
-var __importStar = this && this.__importStar || function (mod) {
-  if (mod && mod.__esModule) return mod;
-  var result = {};
-  if (mod != null) for (var k in mod) {
-    if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-  }
-  result["default"] = mod;
-  return result;
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var THREE = __importStar(require("three"));
-
-function init() {
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-  var renderer = new THREE.WebGLRenderer({
-    antialias: true
-  });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-  window.addEventListener('resize', function () {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-  return {
-    scene: scene,
-    camera: camera,
-    renderer: renderer
-  };
-}
-
-exports.init = init;
-},{"three":"node_modules/three/build/three.module.js"}],"src/ts/helpers/raf.ts":[function(require,module,exports) {
-"use strict";
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var RAF =
-/*#__PURE__*/
-function () {
-  function RAF() {
-    _classCallCheck(this, RAF);
-
-    this.subscribers = [];
-    this.update();
-  }
-
-  _createClass(RAF, [{
-    key: "subscribe",
-    value: function subscribe(f) {
-      var sub = new RAFSubscription(f);
-      this.subscribers.push(sub);
-      return sub;
-    }
-  }, {
-    key: "unSubscibe",
-    value: function unSubscibe(sub) {
-      var index = this.subscribers.indexOf(sub);
-      this.subscribers.splice(index);
-    }
-  }, {
-    key: "update",
-    value: function update() {
-      this.subscribers.forEach(function (sub) {
-        sub.execute();
-      });
-      requestAnimationFrame(this.update.bind(this));
-    }
-  }]);
-
-  return RAF;
-}();
-
-exports.default = RAF;
-
-var RAFSubscription =
-/*#__PURE__*/
-function () {
-  function RAFSubscription(f) {
-    _classCallCheck(this, RAFSubscription);
-
-    this.f = function () {};
-
-    this.isPlaying = true;
-    this.f = f;
-  }
-
-  _createClass(RAFSubscription, [{
-    key: "play",
-    value: function play() {
-      this.isPlaying = true;
-    }
-  }, {
-    key: "pause",
-    value: function pause() {
-      this.isPlaying = false;
-    }
-  }, {
-    key: "execute",
-    value: function execute() {
-      var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
-      if (this.isPlaying || force) {
-        this.f();
-      }
-    }
-  }]);
-
-  return RAFSubscription;
-}();
-},{}],"src/ts/helpers/utils.ts":[function(require,module,exports) {
+},{"../postprocessing/Pass.js":"node_modules/three/examples/jsm/postprocessing/Pass.js"}],"src/ts/effects.ts":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-function range(val, inMin, inMax, outMin, outMax) {
-  return (val - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
-}
-
-exports.range = range;
-
-function lerp(start, end, amt) {
-  return (1 - amt) * start + amt * end;
-}
-
-exports.lerp = lerp;
-},{}],"src/assets/facesData.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = [{
-  dir: [-1, 0, 0],
-  corners: [[0, 1, 0], [0, 0, 0], [0, 1, 1], [0, 0, 1]]
-}, {
-  dir: [1, 0, 0],
-  corners: [[1, 1, 1], [1, 0, 1], [1, 1, 0], [1, 0, 0]]
-}, {
-  dir: [0, -1, 0],
-  corners: [[1, 0, 1], [0, 0, 1], [1, 0, 0], [0, 0, 0]]
-}, {
-  dir: [0, 1, 0],
-  corners: [[0, 1, 1], [1, 1, 1], [0, 1, 0], [1, 1, 0]]
-}, {
-  dir: [0, 0, -1],
-  corners: [[1, 0, 0], [0, 0, 0], [1, 1, 0], [0, 1, 0]]
-}, {
-  dir: [0, 0, 1],
-  corners: [[0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]]
-}];
-},{}],"src/ts/VoxelWorld.ts":[function(require,module,exports) {
-"use strict";
-
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var three_1 = require("three");
-
-var facesData_1 = __importDefault(require("../assets/facesData"));
-
-var VoxelWorld =
-/*#__PURE__*/
-function () {
-  function VoxelWorld(cellSize) {
-    _classCallCheck(this, VoxelWorld);
-
-    this.faces = facesData_1.default;
-    this.cellSize = cellSize;
-    this.cellSliceSize = cellSize * cellSize;
-    this.cell = new Uint8Array(cellSize * cellSize * cellSize);
-  }
-
-  _createClass(VoxelWorld, [{
-    key: "computeVoxelOffset",
-    value: function computeVoxelOffset(x, y, z) {
-      var cellSize = this.cellSize,
-          cellSliceSize = this.cellSliceSize;
-      var voxelX = three_1.MathUtils.euclideanModulo(x, cellSize) | 0;
-      var voxelY = three_1.MathUtils.euclideanModulo(y, cellSize) | 0;
-      var voxelZ = three_1.MathUtils.euclideanModulo(z, cellSize) | 0;
-      return voxelY * cellSliceSize + voxelZ * cellSize + voxelX;
-    }
-  }, {
-    key: "getCellForVoxel",
-    value: function getCellForVoxel(x, y, z) {
-      var cellSize = this.cellSize;
-      var cellX = Math.floor(x / cellSize);
-      var cellY = Math.floor(y / cellSize);
-      var cellZ = Math.floor(z / cellSize);
-
-      if (cellX !== 0 || cellY !== 0 || cellZ !== 0) {
-        return null;
-      }
-
-      return this.cell;
-    }
-  }, {
-    key: "setVoxel",
-    value: function setVoxel(x, y, z, v) {
-      var cell = this.getCellForVoxel(x, y, z);
-
-      if (!cell) {
-        return; // TODO: add a new cell?
-      }
-
-      var voxelOffset = this.computeVoxelOffset(x, y, z);
-      cell[voxelOffset] = v;
-    }
-  }, {
-    key: "getVoxel",
-    value: function getVoxel(x, y, z) {
-      var cell = this.getCellForVoxel(x, y, z);
-
-      if (!cell) {
-        return 0;
-      }
-
-      var voxelOffset = this.computeVoxelOffset(x, y, z);
-      return cell[voxelOffset];
-    }
-  }, {
-    key: "generateGeometryDataForCell",
-    value: function generateGeometryDataForCell(cellX, cellY, cellZ) {
-      var cellSize = this.cellSize;
-      var positions = [];
-      var normals = [];
-      var indices = [];
-      var startX = cellX * cellSize;
-      var startY = cellY * cellSize;
-      var startZ = cellZ * cellSize;
-
-      for (var y = 0; y < cellSize; ++y) {
-        var voxelY = startY + y;
-
-        for (var z = 0; z < cellSize; ++z) {
-          var voxelZ = startZ + z;
-
-          for (var x = 0; x < cellSize; ++x) {
-            var voxelX = startX + x;
-            var voxel = this.getVoxel(voxelX, voxelY, voxelZ);
-
-            if (voxel) {
-              // There is a voxel here but do we need faces for it?
-              var _iteratorNormalCompletion = true;
-              var _didIteratorError = false;
-              var _iteratorError = undefined;
-
-              try {
-                for (var _iterator = this.faces[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                  var _step$value = _step.value,
-                      dir = _step$value.dir,
-                      corners = _step$value.corners;
-                  var neighbor = this.getVoxel(voxelX + dir[0], voxelY + dir[1], voxelZ + dir[2]);
-
-                  if (!neighbor) {
-                    // this voxel has no neighbor in this direction so we need a face.
-                    var ndx = positions.length / 3;
-                    var _iteratorNormalCompletion2 = true;
-                    var _didIteratorError2 = false;
-                    var _iteratorError2 = undefined;
-
-                    try {
-                      for (var _iterator2 = corners[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                        var pos = _step2.value;
-                        positions.push(pos[0] + x, pos[1] + y, pos[2] + z);
-                        normals.push.apply(normals, _toConsumableArray(dir));
-                      }
-                    } catch (err) {
-                      _didIteratorError2 = true;
-                      _iteratorError2 = err;
-                    } finally {
-                      try {
-                        if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-                          _iterator2.return();
-                        }
-                      } finally {
-                        if (_didIteratorError2) {
-                          throw _iteratorError2;
-                        }
-                      }
-                    }
-
-                    indices.push(ndx, ndx + 1, ndx + 2, ndx + 2, ndx + 1, ndx + 3);
-                  }
-                }
-              } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-              } finally {
-                try {
-                  if (!_iteratorNormalCompletion && _iterator.return != null) {
-                    _iterator.return();
-                  }
-                } finally {
-                  if (_didIteratorError) {
-                    throw _iteratorError;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      return {
-        positions: positions,
-        normals: normals,
-        indices: indices
-      };
-    }
-  }]);
-
-  return VoxelWorld;
-}();
-
-exports.default = VoxelWorld;
-},{"three":"node_modules/three/build/three.module.js","../assets/facesData":"src/assets/facesData.ts"}],"src/ts/createRoom.ts":[function(require,module,exports) {
-"use strict";
-
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var three_1 = require("three");
-
-var VoxelWorld_1 = __importDefault(require("./VoxelWorld"));
-
-function createRoom(plan) {
-  var cellSize = plan.length;
-  var world = new VoxelWorld_1.default(cellSize);
-  plan.forEach(function (row, z) {
-    row.forEach(function (pixel, x) {
-      var bin = pixel.toString(2);
-      bin.split('').forEach(function (elev, y) {
-        if (elev === '1') {
-          world.setVoxel(x, y, z, 1);
-        }
-      });
-    });
-  });
-
-  var _world$generateGeomet = world.generateGeometryDataForCell(0, 0, 0),
-      positions = _world$generateGeomet.positions,
-      normals = _world$generateGeomet.normals,
-      indices = _world$generateGeomet.indices;
-
-  var geometry = new three_1.BufferGeometry();
-  var material = new three_1.MeshPhysicalMaterial({
-    color: 0xFFFFFF,
-    roughness: 0.8,
-    metalness: 0.2
-  });
-  var positionNumComponents = 3;
-  var normalNumComponents = 3;
-  geometry.setAttribute('position', new three_1.BufferAttribute(new Float32Array(positions), positionNumComponents));
-  geometry.setAttribute('normal', new three_1.BufferAttribute(new Float32Array(normals), normalNumComponents));
-  geometry.setIndex(indices);
-  return new three_1.Mesh(geometry, material);
-}
-
-exports.default = createRoom;
-},{"three":"node_modules/three/build/three.module.js","./VoxelWorld":"src/ts/VoxelWorld.ts"}],"src/assets/rooms.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = [[[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255, 255, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 192, 224, 224, 192, 128, 128, 128, 128, 128, 255], [131, 128, 128, 128, 128, 192, 224, 0, 0, 224, 192, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 224, 0, 0, 0, 0, 224, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 224, 0, 0, 0, 0, 224, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 192, 224, 0, 0, 224, 192, 128, 128, 128, 128, 131], [255, 128, 128, 128, 128, 128, 192, 224, 224, 192, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255], [255, 255, 255, 255, 128, 128, 128, 128, 128, 128, 128, 128, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 131], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 128, 128, 128, 128, 255, 255, 255, 255, 255, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [131, 128, 128, 128, 128, 128, 192, 225, 225, 192, 128, 128, 128, 128, 128, 131], [129, 128, 128, 128, 128, 128, 225, 255, 255, 225, 128, 128, 128, 128, 128, 129], [129, 128, 128, 128, 128, 128, 225, 255, 255, 225, 128, 128, 128, 128, 128, 129], [131, 128, 128, 128, 128, 128, 192, 225, 225, 192, 128, 128, 128, 128, 128, 131], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 255], [255, 255, 255, 255, 255, 255, 131, 129, 129, 131, 255, 255, 255, 255, 255, 255]], [[255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255], [128, 128, 128, 128, 128, 192, 128, 128, 128, 128, 192, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [255, 192, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 192, 255], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [255, 192, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 192, 255], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128], [128, 128, 128, 128, 128, 192, 128, 128, 128, 128, 192, 128, 128, 128, 128, 128], [255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255, 128, 128, 128, 128, 255]]];
-},{}],"src/main.ts":[function(require,module,exports) {
-"use strict";
-
-var __importDefault = this && this.__importDefault || function (mod) {
-  return mod && mod.__esModule ? mod : {
-    "default": mod
-  };
-};
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var three_1 = require("three");
 
 var ShaderPass_1 = require("three/examples/jsm/postprocessing/ShaderPass");
 
@@ -36777,17 +36946,99 @@ var EffectComposer_1 = require("three/examples/jsm/postprocessing/EffectComposer
 
 var RenderPass_1 = require("three/examples/jsm/postprocessing/RenderPass");
 
+var three_1 = require("three");
+
+function composer(_ref) {
+  var renderer = _ref.renderer,
+      scene = _ref.scene,
+      camera = _ref.camera;
+  var composer = new EffectComposer_1.EffectComposer(renderer);
+  var bloomFx = new UnrealBloomPass_1.UnrealBloomPass(new three_1.Vector2(window.innerWidth, window.innerHeight), 0.3, 0.1, 0.01);
+  var fxaa = new ShaderPass_1.ShaderPass(FXAAShader_1.FXAAShader);
+  composer.setSize(window.innerWidth, window.innerHeight);
+  composer.addPass(new RenderPass_1.RenderPass(scene, camera));
+  composer.addPass(bloomFx);
+  composer.addPass(fxaa);
+  return {
+    composer: composer
+  };
+}
+
+exports.default = composer;
+},{"three/examples/jsm/postprocessing/ShaderPass":"node_modules/three/examples/jsm/postprocessing/ShaderPass.js","three/examples/jsm/postprocessing/UnrealBloomPass":"node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js","three/examples/jsm/shaders/FXAAShader":"node_modules/three/examples/jsm/shaders/FXAAShader.js","three/examples/jsm/postprocessing/EffectComposer":"node_modules/three/examples/jsm/postprocessing/EffectComposer.js","three/examples/jsm/postprocessing/RenderPass":"node_modules/three/examples/jsm/postprocessing/RenderPass.js","three":"node_modules/three/build/three.module.js"}],"src/ts/minimap.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var raf_1 = __importDefault(require("./helpers/raf"));
+
+function createMinimap(mapArray, players) {
+  var canvas = document.createElement('canvas');
+  var ctx = canvas.getContext('2d');
+  canvas.style.position = 'absolute';
+  canvas.style.right = '0';
+  canvas.style.top = '0';
+  canvas.width = mapArray[0].length * 3;
+  canvas.height = mapArray.length * 3;
+  canvas.style.width = mapArray[0].length * 3 + 'px';
+  canvas.style.height = mapArray.length * 3 + 'px';
+  document.body.append(canvas);
+  raf_1.default.subscribe(function () {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    mapArray.forEach(function (row, y) {
+      row.forEach(function (pixel, x) {
+        ctx.fillStyle = 'white';
+        if (pixel) ctx.fillRect(x * 3, y * 3, 3, 3);
+      });
+    });
+    players.forEach(function (player) {
+      ctx.fillStyle = 'red';
+      var x = player.position.x;
+      var y = player.position.z;
+      ctx.fillRect(x * 3, y * 3, 3, 3);
+    });
+  });
+}
+
+exports.default = createMinimap;
+},{"./helpers/raf":"src/ts/helpers/raf.ts"}],"src/main.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var three_1 = require("three");
+
 var three_utils_1 = require("./ts/helpers/three-utils");
 
 var raf_1 = __importDefault(require("./ts/helpers/raf"));
 
 var utils_1 = require("./ts/helpers/utils");
 
-var createRoom_1 = __importDefault(require("./ts/createRoom"));
+var createLevel_1 = require("./ts/objects/createLevel");
 
 var rooms_1 = __importDefault(require("./assets/rooms"));
 
-var raf = new raf_1.default();
+var Player_1 = require("./ts/objects/Player");
+
+var effects_1 = __importDefault(require("./ts/effects"));
+
+var minimap_1 = __importDefault(require("./ts/minimap"));
 
 var _three_utils_1$init = three_utils_1.init(),
     camera = _three_utils_1$init.camera,
@@ -36798,77 +37049,53 @@ renderer.shadowMap.enabled = true;
 renderer.outputEncoding = three_1.sRGBEncoding;
 renderer.pixelRatio = 2;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = three_1.PCFSoftShadowMap; // FX
+renderer.shadowMap.type = three_1.PCFSoftShadowMap;
 
-var composer = new EffectComposer_1.EffectComposer(renderer);
-var bloomFx = new UnrealBloomPass_1.UnrealBloomPass(new three_1.Vector2(window.innerWidth, window.innerHeight), 0.3, 0.1, 0.01);
-var fxaa = new ShaderPass_1.ShaderPass(FXAAShader_1.FXAAShader);
-composer.setSize(window.innerWidth, window.innerHeight);
-composer.addPass(new RenderPass_1.RenderPass(scene, camera));
-composer.addPass(bloomFx);
-composer.addPass(fxaa);
-var _ = null;
+var _effects_1$default = effects_1.default({
+  renderer: renderer,
+  scene: scene,
+  camera: camera
+}),
+    composer = _effects_1$default.composer;
+
+var _ = null; // same length as a single digit
+
 var levelPlan = [[_, 0, 4, _], [_, 1, 2, _], [1, 3, 1, 0], [4, 0, 4, _]];
-var roomSize = rooms_1.default[0].length;
-var level = new three_1.Object3D();
-levelPlan.forEach(function (row, x) {
-  row.forEach(function (planId, z) {
-    if (rooms_1.default[planId]) {
-      var plan = rooms_1.default[planId];
-      var room = createRoom_1.default(plan);
-      room.castShadow = true;
-      room.receiveShadow = true;
-      room.position.x = x * roomSize - roomSize * levelPlan.length / 2;
-      room.position.z = z * roomSize - roomSize * levelPlan.length / 2;
-      level.add(room);
-    }
-  });
-});
+var levelMap = createLevel_1.addExteriorWalls(createLevel_1.mergeRooms(rooms_1.default, levelPlan), levelPlan);
+var level = createLevel_1.mapToMesh(levelMap);
+level.castShadow = true;
+level.receiveShadow = true;
 scene.add(level);
-var light = new three_1.PointLight(0xFFCC88, 1, 100, 2);
-light.add(new three_1.Mesh(new three_1.CylinderBufferGeometry(0.3, 0.3, 3, 8), new three_1.MeshStandardMaterial({
-  emissive: 0xffffee,
-  emissiveIntensity: 1 / 0.04,
-  color: 0x000000
-})));
-light.castShadow = true;
-light.power = 10;
-light.shadow.mapSize.width = 2048;
-light.shadow.mapSize.height = 2048;
-scene.add(light); // Move
-
-var position = {
-  x: 4,
-  y: 4
-};
-var velocity = {
-  x: 0,
-  y: 0
-};
+var walkableMap = createLevel_1.mapToWalkable(levelMap);
+var player = new Player_1.Player({
+  walkableMap: walkableMap
+});
+player.position.set(20, 0, 8);
+scene.add(player.obj);
+minimap_1.default(walkableMap, [player]);
 window.addEventListener('keydown', function (e) {
-  if (e.key === 'q') velocity.x = Math.max(-1, Math.min(1, velocity.x - 1));
-  if (e.key === 'd') velocity.x = Math.max(-1, Math.min(1, velocity.x + 1));
-  if (e.key === 'z') velocity.y = Math.max(-1, Math.min(1, velocity.y - 1));
-  if (e.key === 's') velocity.y = Math.max(-1, Math.min(1, velocity.y + 1));
+  if (e.code === 'KeyA') player.velocityX = player.velocity.x - 1;
+  if (e.code === 'KeyD') player.velocityX = player.velocity.x + 1;
+  if (e.code === 'KeyW') player.velocityZ = player.velocity.z - 1;
+  if (e.code === 'KeyS') player.velocityZ = player.velocity.z + 1;
 });
 window.addEventListener('keyup', function (e) {
-  if (e.key === 'q') velocity.x = Math.max(-1, Math.min(1, velocity.x + 1));
-  if (e.key === 'd') velocity.x = Math.max(-1, Math.min(1, velocity.x - 1));
-  if (e.key === 'z') velocity.y = Math.max(-1, Math.min(1, velocity.y + 1));
-  if (e.key === 's') velocity.y = Math.max(-1, Math.min(1, velocity.y - 1));
+  if (e.code === 'KeyA') player.velocityX = player.velocity.x + 1;
+  if (e.code === 'KeyD') player.velocityX = player.velocity.x - 1;
+  if (e.code === 'KeyW') player.velocityZ = player.velocity.z + 1;
+  if (e.code === 'KeyS') player.velocityZ = player.velocity.z - 1;
 }); // Animation
 
-raf.subscribe(function () {
-  position.x += velocity.x / 5;
-  position.y += velocity.y / 5;
-  camera.position.set(utils_1.lerp(camera.position.x, position.x, 0.1), 20, utils_1.lerp(camera.position.z, position.y + 6, 0.1));
-  camera.lookAt(camera.position.x, 0, camera.position.z - 6);
-  light.position.set(position.x, 3, position.y);
+raf_1.default.subscribe(function () {
+  camera.position.x = utils_1.lerp(camera.position.x, player.obj.position.x, 0.05);
+  camera.position.y = utils_1.lerp(camera.position.y, player.obj.position.y + 40, 0.05);
+  camera.position.z = utils_1.lerp(camera.position.z, player.obj.position.z + 6, 0.05);
+  camera.lookAt(camera.position.x, 2, camera.position.z - 6);
 });
-raf.subscribe(function () {
+raf_1.default.subscribe(function () {
   composer.render();
 });
-},{"three":"node_modules/three/build/three.module.js","three/examples/jsm/postprocessing/ShaderPass":"node_modules/three/examples/jsm/postprocessing/ShaderPass.js","three/examples/jsm/postprocessing/UnrealBloomPass":"node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js","three/examples/jsm/shaders/FXAAShader":"node_modules/three/examples/jsm/shaders/FXAAShader.js","three/examples/jsm/postprocessing/EffectComposer":"node_modules/three/examples/jsm/postprocessing/EffectComposer.js","three/examples/jsm/postprocessing/RenderPass":"node_modules/three/examples/jsm/postprocessing/RenderPass.js","./ts/helpers/three-utils":"src/ts/helpers/three-utils.ts","./ts/helpers/raf":"src/ts/helpers/raf.ts","./ts/helpers/utils":"src/ts/helpers/utils.ts","./ts/createRoom":"src/ts/createRoom.ts","./assets/rooms":"src/assets/rooms.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"three":"node_modules/three/build/three.module.js","./ts/helpers/three-utils":"src/ts/helpers/three-utils.ts","./ts/helpers/raf":"src/ts/helpers/raf.ts","./ts/helpers/utils":"src/ts/helpers/utils.ts","./ts/objects/createLevel":"src/ts/objects/createLevel.ts","./assets/rooms":"src/assets/rooms.ts","./ts/objects/Player":"src/ts/objects/Player.ts","./ts/effects":"src/ts/effects.ts","./ts/minimap":"src/ts/minimap.ts"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -36896,7 +37123,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63086" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63277" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
