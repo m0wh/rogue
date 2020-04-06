@@ -1,5 +1,5 @@
 import { MathUtils } from 'three'
-import facesData from '../assets/facesData'
+import facesData from '../../assets/facesData'
 
 export default class VoxelWorld {
   private cellSize: number

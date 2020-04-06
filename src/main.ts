@@ -1,16 +1,13 @@
-import { PointLight, Mesh, sRGBEncoding, PCFSoftShadowMap, Object3D, CylinderBufferGeometry, MeshStandardMaterial, Vector2 } from 'three'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { sRGBEncoding, PCFSoftShadowMap } from 'three'
 import { init } from './ts/helpers/three-utils'
-import RAF from './ts/helpers/raf'
+import raf from './ts/helpers/raf'
 import { lerp } from './ts/helpers/utils'
-import createRoom from './ts/createRoom'
+import { mergeRooms, mapToMesh, addExteriorWalls, mapToWalkable } from './ts/objects/createLevel'
 import roomPlans from './assets/rooms'
+import { Player } from './ts/objects/Player'
+import effects from './ts/effects'
+import createMinimap from './ts/minimap'
 
-const raf = new RAF()
 const { camera, renderer, scene } = init()
 
 renderer.shadowMap.enabled = true
@@ -19,17 +16,9 @@ renderer.pixelRatio = 2
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = PCFSoftShadowMap
 
-// FX
+const { composer } = effects({ renderer, scene, camera })
 
-const composer = new EffectComposer(renderer)
-const bloomFx = new UnrealBloomPass(new Vector2(window.innerWidth, window.innerHeight), 0.3, 0.1, 0.01)
-const fxaa = new ShaderPass(FXAAShader)
-composer.setSize(window.innerWidth, window.innerHeight)
-composer.addPass(new RenderPass(scene, camera))
-composer.addPass(bloomFx)
-composer.addPass(fxaa)
-
-const _ = null
+const _ = null // same length as a single digit
 const levelPlan = [
   [_, 0, 4, _],
   [_, 1, 2, _],
@@ -37,66 +26,41 @@ const levelPlan = [
   [4, 0, 4, _]
 ]
 
-const roomSize = roomPlans[0].length
-
-const level = new Object3D()
-levelPlan.forEach((row, x) => {
-  row.forEach((planId, z) => {
-    if (roomPlans[planId]) {
-      const plan = roomPlans[planId]
-      const room = createRoom(plan)
-      room.castShadow = true
-      room.receiveShadow = true
-      room.position.x = x * roomSize - (roomSize * levelPlan.length / 2)
-      room.position.z = z * roomSize - (roomSize * levelPlan.length / 2)
-      level.add(room)
-    }
-  })
-})
-
+const levelMap = addExteriorWalls(mergeRooms(roomPlans, levelPlan), levelPlan)
+const level = mapToMesh(levelMap)
+level.castShadow = true
+level.receiveShadow = true
 scene.add(level)
 
-const light = new PointLight(0xFFCC88, 1, 100, 2)
-light.add(new Mesh(
-  new CylinderBufferGeometry(0.3, 0.3, 3, 8),
-  new MeshStandardMaterial({ emissive: 0xffffee, emissiveIntensity: 1 / 0.04, color: 0x000000 })
-))
-light.castShadow = true
-light.power = 10
-light.shadow.mapSize.width = 2048
-light.shadow.mapSize.height = 2048
-scene.add(light)
+const walkableMap = mapToWalkable(levelMap)
 
-// Move
-const position = { x: 4, y: 4 }
-const velocity = { x: 0, y: 0 }
+const player = new Player({ walkableMap })
+player.position.set(20, 0, 8)
+scene.add(player.obj)
+
+createMinimap(walkableMap, [player])
 
 window.addEventListener('keydown', e => {
-  if (e.key === 'q') velocity.x = Math.max(-1, Math.min(1, velocity.x - 1))
-  if (e.key === 'd') velocity.x = Math.max(-1, Math.min(1, velocity.x + 1))
-  if (e.key === 'z') velocity.y = Math.max(-1, Math.min(1, velocity.y - 1))
-  if (e.key === 's') velocity.y = Math.max(-1, Math.min(1, velocity.y + 1))
+  if (e.code === 'KeyA') player.velocityX = player.velocity.x - 1
+  if (e.code === 'KeyD') player.velocityX = player.velocity.x + 1
+  if (e.code === 'KeyW') player.velocityZ = player.velocity.z - 1
+  if (e.code === 'KeyS') player.velocityZ = player.velocity.z + 1
 })
 
 window.addEventListener('keyup', e => {
-  if (e.key === 'q') velocity.x = Math.max(-1, Math.min(1, velocity.x + 1))
-  if (e.key === 'd') velocity.x = Math.max(-1, Math.min(1, velocity.x - 1))
-  if (e.key === 'z') velocity.y = Math.max(-1, Math.min(1, velocity.y + 1))
-  if (e.key === 's') velocity.y = Math.max(-1, Math.min(1, velocity.y - 1))
+  if (e.code === 'KeyA') player.velocityX = player.velocity.x + 1
+  if (e.code === 'KeyD') player.velocityX = player.velocity.x - 1
+  if (e.code === 'KeyW') player.velocityZ = player.velocity.z + 1
+  if (e.code === 'KeyS') player.velocityZ = player.velocity.z - 1
 })
 
 // Animation
 
 raf.subscribe(() => {
-  position.x += velocity.x / 5
-  position.y += velocity.y / 5
-  camera.position.set(
-    lerp(camera.position.x, position.x, 0.1),
-    20,
-    lerp(camera.position.z, position.y + 6, 0.1)
-  )
-  camera.lookAt(camera.position.x, 0, camera.position.z - 6)
-  light.position.set(position.x, 3, position.y)
+  camera.position.x = lerp(camera.position.x, player.obj.position.x, 0.05)
+  camera.position.y = lerp(camera.position.y, player.obj.position.y + 40, 0.05)
+  camera.position.z = lerp(camera.position.z, player.obj.position.z + 6, 0.05)
+  camera.lookAt(camera.position.x, 2, camera.position.z - 6)
 })
 
 raf.subscribe(() => {

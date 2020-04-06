@@ -1,4 +1,4 @@
-export default class RAF {
+class RAF {
   private subscribers: Array<RAFSubscription> = []
 
   constructor () {
@@ -41,3 +41,5 @@ class RAFSubscription {
     }
   }
 }
+
+export default new RAF()
