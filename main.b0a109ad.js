@@ -36983,27 +36983,28 @@ var raf_1 = __importDefault(require("./helpers/raf"));
 function createMinimap(mapArray, players) {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
+  var pixelSize = 5;
   canvas.style.position = 'absolute';
-  canvas.style.right = '0';
-  canvas.style.top = '0';
-  canvas.width = mapArray[0].length * 3;
-  canvas.height = mapArray.length * 3;
-  canvas.style.width = mapArray[0].length * 3 + 'px';
-  canvas.style.height = mapArray.length * 3 + 'px';
+  canvas.style.right = pixelSize / 2 + 'px';
+  canvas.style.top = pixelSize / 2 + 'px';
+  canvas.width = mapArray[0].length * pixelSize;
+  canvas.height = mapArray.length * pixelSize;
+  canvas.style.width = mapArray[0].length * (pixelSize / 2) + 'px';
+  canvas.style.height = mapArray.length * (pixelSize / 2) + 'px';
   document.body.append(canvas);
   raf_1.default.subscribe(function () {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     mapArray.forEach(function (row, y) {
       row.forEach(function (pixel, x) {
         ctx.fillStyle = 'white';
-        if (pixel) ctx.fillRect(x * 3, y * 3, 3, 3);
+        if (pixel) ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
       });
     });
     players.forEach(function (player) {
       ctx.fillStyle = 'red';
       var x = player.position.x;
       var y = player.position.z;
-      ctx.fillRect(x * 3, y * 3, 3, 3);
+      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
     });
   });
 }
@@ -37011,6 +37012,14 @@ function createMinimap(mapArray, players) {
 exports.default = createMinimap;
 },{"./helpers/raf":"src/ts/helpers/raf.ts"}],"src/main.ts":[function(require,module,exports) {
 "use strict";
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
@@ -37056,12 +37065,78 @@ var _effects_1$default = effects_1.default({
   scene: scene,
   camera: camera
 }),
-    composer = _effects_1$default.composer;
+    composer = _effects_1$default.composer; // const _ = null // same length as a single digit
+// const levelPlan = [
+//   [_, 0, 4, _],
+//   [_, 1, 2, _],
+//   [1, 3, 1, 0],
+//   [4, 0, 4, _]
+// ]
 
-var _ = null; // same length as a single digit
 
-var levelPlan = [[_, 0, 4, _], [_, 1, 2, _], [1, 3, 1, 0], [4, 0, 4, _]];
-var levelMap = createLevel_1.addExteriorWalls(createLevel_1.mergeRooms(rooms_1.default, levelPlan), levelPlan);
+function generateLevelPlan(plans, numberOfRooms) {
+  var currentPos = {
+    x: 0,
+    y: 0
+  };
+  var rooms = new Array(numberOfRooms).fill({
+    value: null,
+    x: undefined,
+    y: undefined
+  });
+
+  for (var iteration = 0; iteration < numberOfRooms; iteration++) {
+    rooms[iteration] = Object.assign({
+      value: Math.floor(Math.random() * plans.length)
+    }, currentPos);
+
+    while (rooms.filter(function (room) {
+      return room.x === currentPos.x && room.y === currentPos.y;
+    }).length > 0) {
+      if (Math.random() > 0.5) {
+        currentPos.x += Math.random() > 0.5 ? 1 : -1;
+      } else {
+        currentPos.y += Math.random() > 0.5 ? 1 : -1;
+      }
+    }
+  }
+
+  var min = {
+    x: Math.min.apply(Math, _toConsumableArray(rooms.map(function (room) {
+      return room.x;
+    }))),
+    y: Math.min.apply(Math, _toConsumableArray(rooms.map(function (room) {
+      return room.y;
+    })))
+  };
+  var max = {
+    x: Math.max.apply(Math, _toConsumableArray(rooms.map(function (room) {
+      return room.x;
+    }))),
+    y: Math.max.apply(Math, _toConsumableArray(rooms.map(function (room) {
+      return room.y;
+    })))
+  };
+  var size = Math.max(max.x - min.x + 1, max.y - min.y + 1);
+  var plan = new Array(size).fill(new Array(size).fill(null));
+  return {
+    startRoom: {
+      x: -min.x,
+      y: -min.y
+    },
+    plan: plan.map(function (row, y) {
+      return row.map(function (_, x) {
+        var okRooms = rooms.filter(function (room) {
+          return room.x - min.x === x && room.y - min.y === y;
+        });
+        return okRooms.length > 0 ? okRooms[0].value : null;
+      });
+    })
+  };
+}
+
+var levelPlan = generateLevelPlan(rooms_1.default, 10);
+var levelMap = createLevel_1.addExteriorWalls(createLevel_1.mergeRooms(rooms_1.default, levelPlan.plan), levelPlan.plan);
 var level = createLevel_1.mapToMesh(levelMap);
 level.castShadow = true;
 level.receiveShadow = true;
@@ -37070,7 +37145,7 @@ var walkableMap = createLevel_1.mapToWalkable(levelMap);
 var player = new Player_1.Player({
   walkableMap: walkableMap
 });
-player.position.set(20, 0, 8);
+player.position.set(levelPlan.startRoom.x * 16 + 7.5, 0, levelPlan.startRoom.y * 16 + 4);
 scene.add(player.obj);
 minimap_1.default(walkableMap, [player]);
 window.addEventListener('keydown', function (e) {
@@ -37123,7 +37198,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63277" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64030" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
