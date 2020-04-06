@@ -6,14 +6,16 @@ export default function createMinimap (mapArray: boolean[][], players: Player[])
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
 
-  canvas.style.position = 'absolute'
-  canvas.style.right = '0'
-  canvas.style.top = '0'
+  const pixelSize = 5
 
-  canvas.width = mapArray[0].length * 3
-  canvas.height = mapArray.length * 3
-  canvas.style.width = mapArray[0].length * 3 + 'px'
-  canvas.style.height = mapArray.length * 3 + 'px'
+  canvas.style.position = 'absolute'
+  canvas.style.right = (pixelSize / 2) + 'px'
+  canvas.style.top = (pixelSize / 2) + 'px'
+
+  canvas.width = mapArray[0].length * pixelSize
+  canvas.height = mapArray.length * pixelSize
+  canvas.style.width = mapArray[0].length * (pixelSize / 2) + 'px'
+  canvas.style.height = mapArray.length * (pixelSize / 2) + 'px'
 
   document.body.append(canvas)
 
@@ -23,7 +25,7 @@ export default function createMinimap (mapArray: boolean[][], players: Player[])
     mapArray.forEach((row, y) => {
       row.forEach((pixel, x) => {
         ctx.fillStyle = 'white'
-        if (pixel) ctx.fillRect(x * 3, y * 3, 3, 3)
+        if (pixel) ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize)
       })
     })
 
@@ -31,7 +33,7 @@ export default function createMinimap (mapArray: boolean[][], players: Player[])
       ctx.fillStyle = 'red'
       const x = player.position.x
       const y = player.position.z
-      ctx.fillRect(x * 3, y * 3, 3, 3)
+      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize)
     })
   })
 }
